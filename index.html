@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Genshin Impact Farming Tracker</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --card-alt: #273549;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-hover: #0ea5e9;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --border: #334155;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 16px;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 820px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    header h1 {
+      margin: 0 0 6px;
+      font-size: 1.6rem;
+      color: var(--accent);
+    }
+
+    header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: 18px;
+    }
+
+    .card h2 {
+      margin: 0 0 14px;
+      font-size: 1.15rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    select, input[type="number"] {
+      width: 100%;
+      padding: 9px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 0.95rem;
+    }
+
+    .level-pair {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .level-pair span {
+      color: var(--muted);
+      font-weight: bold;
+    }
+
+    .material-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: var(--card-alt);
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .mat-info {
+      flex: 1 1 220px;
+    }
+
+    .mat-name {
+      font-weight: 600;
+      font-size: 0.98rem;
+    }
+
+    .mat-category {
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .mat-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .mat-controls input {
+      width: 82px;
+      text-align: center;
+      padding: 6px;
+    }
+
+    button {
+      background: var(--accent);
+      color: #0f172a;
+      border: none;
+      border-radius: 7px;
+      padding: 7px 11px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    button:hover {
+      background: var(--accent-hover);
+    }
+
+    button.secondary {
+      background: var(--border);
+      color: var(--text);
+    }
+
+    button.secondary:hover {
+      background: #475569;
+    }
+
+    .mat-status {
+      min-width: 120px;
+      text-align: right;
+      font-weight: 600;
+      font-size: 0.92rem;
+    }
+
+    .done {
+      color: var(--success);
+    }
+
+    .needed {
+      color: var(--warning);
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text);
+      font-size: 0.9rem;
+      cursor: pointer;
+      margin: 0;
+    }
+
+    .footer-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 540px) {
+      .mat-status {
+        text-align: left;
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Genshin Farming Tracker</h1>
+      <p>Track character ascension &amp; talent materials offline on desktop or Android.</p>
+    </header>
+
+    <!-- 1. Character & Target Selection -->
+    <div class="card">
+      <h2>1. Target Character &amp; Levels</h2>
+      <div class="grid-2" style="margin-bottom: 14px;">
+        <div>
+          <label for="characterSelect">Character</label>
+          <select id="characterSelect"></select>
+        </div>
+        <div>
+          <label>Ascension Phase (0 = Lv.1/20, 6 = Lv.80/90)</label>
+          <div class="level-pair">
+            <select id="ascCurrent"></select>
+            <span>&rarr;</span>
+            <select id="ascTarget"></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div>
+          <label>Normal Attack Talent</label>
+          <div class="level-pair">
+            <select id="talentNormalCurrent"></select>
+            <span>&rarr;</span>
+            <select id="talentNormalTarget"></select>
+          </div>
+        </div>
+        <div>
+          <label>Elemental Skill Talent</label>
+          <div class="level-pair">
+            <select id="talentSkillCurrent"></select>
+            <span>&rarr;</span>
+            <select id="talentSkillTarget"></select>
+          </div>
+        </div>
+        <div>
+          <label>Elemental Burst Talent</label>
+          <div class="level-pair">
+            <select id="talentBurstCurrent"></select>
+            <span>&rarr;</span>
+            <select id="talentBurstTarget"></select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Farming Checklist -->
+    <div class="card">
+      <h2>2. Remaining Materials to Grind</h2>
+      <div class="toolbar">
+        <label class="checkbox-label">
+          <input type="checkbox" id="hideCompleted" />
+          Hide completed materials (0 remaining)
+        </label>
+        <div class="footer-actions" style="margin: 0;">
+          <button class="secondary" id="exportBtn">Export Backup JSON</button>
+          <button class="secondary" id="importBtn">Import Backup JSON</button>
+          <input type="file" id="importFile" accept=".json" style="display:none;" />
+        </div>
+      </div>
+      <div id="materialsList"></div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================
+    // 1. STATIC GAME DATA (Add new characters here!)
+    // =========================================================
+    const GAME_DATA = {
+      ascensionCosts: [
+        { step: 1, label: "Phase 1 (20 -> 40)", mora: 20000, specialty: 3, enemy: { tier: 1, count: 3 }, gem: { rarity: "sliver", count: 1 }, boss: 0 },
+        { step: 2, label: "Phase 2 (40 -> 50)", mora: 40000, specialty: 10, enemy: { tier: 1, count: 15 }, gem: { rarity: "fragment", count: 3 }, boss: 2 },
+        { step: 3, label: "Phase 3 (50 -> 60)", mora: 60000, specialty: 20, enemy: { tier: 2, count: 12 }, gem: { rarity: "fragment", count: 6 }, boss: 4 },
+        { step: 4, label: "Phase 4 (60 -> 70)", mora: 80000, specialty: 30, enemy: { tier: 2, count: 18 }, gem: { rarity: "chunk", count: 3 }, boss: 8 },
+        { step: 5, label: "Phase 5 (70 -> 80)", mora: 100000, specialty: 45, enemy: { tier: 3, count: 12 }, gem: { rarity: "chunk", count: 6 }, boss: 12 },
+        { step: 6, label: "Phase 6 (80 -> 90)", mora: 120000, specialty: 60, enemy: { tier: 3, count: 24 }, gem: { rarity: "gemstone", count: 6 }, boss: 20 }
+      ],
+      talentStepCosts: [
+        { from: 1, to: 2, mora: 12500, book: { rarity: "teachings", count: 3 }, enemy: { tier: 1, count: 6 }, weekly: 0, crown: 0 },
+        { from: 2, to: 3, mora: 17500, book: { rarity: "guide", count: 2 }, enemy: { tier: 2, count: 3 }, weekly: 0, crown: 0 },
+        { from: 3, to: 4, mora: 25000, book: { rarity: "guide", count: 4 }, enemy: { tier: 2, count: 4 }, weekly: 0, crown: 0 },
+        { from: 4, to: 5, mora: 30000, book: { rarity: "guide", count: 6 }, enemy: { tier: 2, count: 6 }, weekly: 0, crown: 0 },
+        { from: 5, to: 6, mora: 37500, book: { rarity: "guide", count: 9 }, enemy: { tier: 2, count: 9 }, weekly: 0, crown: 0 },
+        { from: 6, to: 7, mora: 120000, book: { rarity: "philosophies", count: 4 }, enemy: { tier: 3, count: 4 }, weekly: 1, crown: 0 },
+        { from: 7, to: 8, mora: 260000, book: { rarity: "philosophies", count: 6 }, enemy: { tier: 3, count: 6 }, weekly: 1, crown: 0 },
+        { from: 8, to: 9, mora: 450000, book: { rarity: "philosophies", count: 12 }, enemy: { tier: 3, count: 9 }, weekly: 2, crown: 0 },
+        { from: 9, to: 10, mora: 700000, book: { rarity: "philosophies", count: 16 }, enemy: { tier: 3, count: 12 }, weekly: 2, crown: 1 }
+      ],
+      materialNames: {
+        mora: { name: "Mora", category: "Currency" },
+        crown_of_insight: { name: "Crown of Insight", category: "Event / Limited" },
+        // Sample Set 1: Diluc-style Pyro
+        agnidus_sliver: { name: "Agnidus Agate Sliver", category: "Ascension Gem (2★)" },
+        agnidus_fragment: { name: "Agnidus Agate Fragment", category: "Ascension Gem (3★)" },
+        agnidus_chunk: { name: "Agnidus Agate Chunk", category: "Ascension Gem (4★)" },
+        agnidus_gemstone: { name: "Agnidus Agate Gemstone", category: "Ascension Gem (5★)" },
+        small_lamp_grass: { name: "Small Lamp Grass", category: "Local Specialty" },
+        everflame_seed: { name: "Everflame Seed", category: "Normal Boss Drop" },
+        dvalins_plume: { name: "Dvalin's Plume", category: "Weekly Boss Drop" },
+        resistance_teachings: { name: "Teachings of Resistance", category: "Talent Book (Tue/Fri/Sun)" },
+        resistance_guide: { name: "Guide to Resistance", category: "Talent Book (Tue/Fri/Sun)" },
+        resistance_philosophies: { name: "Philosophies of Resistance", category: "Talent Book (Tue/Fri/Sun)" },
+        insignia_t1: { name: "Recruit's Insignia", category: "Enemy Drop (1★)" },
+        insignia_t2: { name: "Sergeant's Insignia", category: "Enemy Drop (2★)" },
+        insignia_t3: { name: "Lieutenant's Insignia", category: "Enemy Drop (3★)" },
+        // Sample Set 2: Furina-style Hydro
+        varunada_sliver: { name: "Varunada Lazurite Sliver", category: "Ascension Gem (2★)" },
+        varunada_fragment: { name: "Varunada Lazurite Fragment", category: "Ascension Gem (3★)" },
+        varunada_chunk: { name: "Varunada Lazurite Chunk", category: "Ascension Gem (4★)" },
+        varunada_gemstone: { name: "Varunada Lazurite Gemstone", category: "Ascension Gem (5★)" },
+        lakelight_lily: { name: "Lakelight Lily", category: "Local Specialty" },
+        water_that_failed_to_transcend: { name: "Water That Failed To Transcend", category: "Normal Boss Drop" },
+        lightless_mass: { name: "Lightless Mass", category: "Weekly Boss Drop" },
+        justice_teachings: { name: "Teachings of Justice", category: "Talent Book (Tue/Fri/Sun)" },
+        justice_guide: { name: "Guide to Justice", category: "Talent Book (Tue/Fri/Sun)" },
+        justice_philosophies: { name: "Philosophies of Justice", category: "Talent Book (Tue/Fri/Sun)" },
+        nectar_t1: { name: "Whopperflower Nectar", category: "Enemy Drop (1★)" },
+        nectar_t2: { name: "Shimmering Nectar", category: "Enemy Drop (2★)" },
+        nectar_t3: { name: "Energy Nectar", category: "Enemy Drop (3★)" }
+      },
+      characters: {
+        diluc: {
+          name: "Diluc (Pyro)",
+          materials: {
+            gem: "agnidus",
+            specialty: "small_lamp_grass",
+            boss: "everflame_seed",
+            weekly: "dvalins_plume",
+            book: "resistance",
+            enemy: "insignia"
+          }
+        },
+        furina: {
+          name: "Furina (Hydro)",
+          materials: {
+            gem: "varunada",
+            specialty: "lakelight_lily",
+            boss: "water_that_failed_to_transcend",
+            weekly: "lightless_mass",
+            book: "justice",
+            enemy: "nectar"
+          }
+        }
+      }
+    };
+
+    // =========================================================
+    // 2. USER STATE (Saved automatically in browser localStorage)
+    // =========================================================
+    const STORAGE_KEY = "genshin_farming_tracker_v1";
+
+    const DEFAULT_STATE = {
+      selectedCharacter: "furina",
+      hideCompleted: false,
+      inventory: {
+        mora: 500000,
+        lakelight_lily: 25,
+        water_that_failed_to_transcend: 6,
+        justice_teachings: 9
+      },
+      plans: {
+        diluc: { ascCurrent: 0, ascTarget: 6, nCur: 1, nTar: 8, sCur: 1, sTar: 8, bCur: 1, bTar: 8 },
+        furina: { ascCurrent: 1, ascTarget: 6, nCur: 1, nTar: 6, sCur: 4, sTar: 10, bCur: 4, bTar: 10 }
+      }
+    };
+
+    let state = loadState();
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return structuredClone(DEFAULT_STATE);
+        const parsed = JSON.parse(raw);
+        return {
+          ...structuredClone(DEFAULT_STATE),
+          ...parsed,
+          inventory: { ...DEFAULT_STATE.inventory, ...(parsed.inventory || {}) },
+          plans: { ...DEFAULT_STATE.plans, ...(parsed.plans || {}) }
+        };
+      } catch {
+        return structuredClone(DEFAULT_STATE);
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    // =========================================================
+    // 3. CALCULATION LOGIC
+    // =========================================================
+    function addReq(map, id, qty) {
+      if (!id || !qty || qty <= 0) return;
+      map[id] = (map[id] || 0) + qty;
+    }
+
+    function calculateRequirements(charId, plan) {
+      const char = GAME_DATA.characters[charId];
+      const m = char.materials;
+      const req = {};
+
+      // Ascension materials
+      for (const step of GAME_DATA.ascensionCosts) {
+        if (step.step > plan.ascCurrent && step.step <= plan.ascTarget) {
+          addReq(req, "mora", step.mora);
+          addReq(req, m.specialty, step.specialty);
+          addReq(req, m.boss, step.boss);
+          addReq(req, `${m.gem}_${step.gem.rarity}`, step.gem.count);
+          addReq(req, `${m.enemy}_t${step.enemy.tier}`, step.enemy.count);
+        }
+      }
+
+      // Talent materials (Normal, Skill, Burst)
+      const talentPairs = [
+        [plan.nCur, plan.nTar],
+        [plan.sCur, plan.sTar],
+        [plan.bCur, plan.bTar]
+      ];
+
+      for (const [cur, tar] of talentPairs) {
+        for (const step of GAME_DATA.talentStepCosts) {
+          if (step.from >= cur && step.to <= tar) {
+            addReq(req, "mora", step.mora);
+            addReq(req, `${m.book}_${step.book.rarity}`, step.book.count);
+            addReq(req, `${m.enemy}_t${step.enemy.tier}`, step.enemy.count);
+            addReq(req, m.weekly, step.weekly);
+            addReq(req, "crown_of_insight", step.crown);
+          }
+        }
+      }
+
+      return req;
+    }
+
+    // =========================================================
+    // 4. UI SETUP & RENDERING
+    // =========================================================
+    const charSelect = document.getElementById("characterSelect");
+    const ascCurrent = document.getElementById("ascCurrent");
+    const ascTarget = document.getElementById("ascTarget");
+    const nCur = document.getElementById("talentNormalCurrent");
+    const nTar = document.getElementById("talentNormalTarget");
+    const sCur = document.getElementById("talentSkillCurrent");
+    const sTar = document.getElementById("talentSkillTarget");
+    const bCur = document.getElementById("talentBurstCurrent");
+    const bTar = document.getElementById("talentBurstTarget");
+    const hideCompletedEl = document.getElementById("hideCompleted");
+    const materialsListEl = document.getElementById("materialsList");
+
+    function populateDropdowns() {
+      // Characters
+      charSelect.innerHTML = "";
+      for (const [id, char] of Object.entries(GAME_DATA.characters)) {
+        const opt = document.createElement("option");
+        opt.value = id;
+        opt.textContent = char.name;
+        charSelect.appendChild(opt);
+      }
+
+      // Ascension 0..6
+      const ascLabels = [
+        "0 (Lv. 1/20)",
+        "1 (Lv. 20/40)",
+        "2 (Lv. 40/50)",
+        "3 (Lv. 50/60)",
+        "4 (Lv. 60/70)",
+        "5 (Lv. 70/80)",
+        "6 (Lv. 80/90)"
+      ];
+      [ascCurrent, ascTarget].forEach(sel => {
+        sel.innerHTML = "";
+        ascLabels.forEach((label, idx) => {
+          const opt = document.createElement("option");
+          opt.value = idx;
+          opt.textContent = label;
+          sel.appendChild(opt);
+        });
+      });
+
+      // Talents 1..10
+      [nCur, nTar, sCur, sTar, bCur, bTar].forEach(sel => {
+        sel.innerHTML = "";
+        for (let lv = 1; lv <= 10; lv++) {
+          const opt = document.createElement("option");
+          opt.value = lv;
+          opt.textContent = `Lv. ${lv}`;
+          sel.appendChild(opt);
+        }
+      });
+    }
+
+    function syncFormFromState() {
+      const charId = state.selectedCharacter;
+      if (!state.plans[charId]) {
+        state.plans[charId] = { ascCurrent: 0, ascTarget: 6, nCur: 1, nTar: 6, sCur: 1, sTar: 8, bCur: 1, bTar: 8 };
+      }
+      const plan = state.plans[charId];
+
+      charSelect.value = charId;
+      ascCurrent.value = plan.ascCurrent;
+      ascTarget.value = plan.ascTarget;
+      nCur.value = plan.nCur;
+      nTar.value = plan.nTar;
+      sCur.value = plan.sCur;
+      sTar.value = plan.sTar;
+      bCur.value = plan.bCur;
+      bTar.value = plan.bTar;
+      hideCompletedEl.checked = !!state.hideCompleted;
+    }
+
+    function readPlanFromForm() {
+      const charId = charSelect.value;
+      state.selectedCharacter = charId;
+      state.plans[charId] = {
+        ascCurrent: Number(ascCurrent.value),
+        ascTarget: Math.max(Number(ascCurrent.value), Number(ascTarget.value)),
+        nCur: Number(nCur.value),
+        nTar: Math.max(Number(nCur.value), Number(nTar.value)),
+        sCur: Number(sCur.value),
+        sTar: Math.max(Number(sCur.value), Number(sTar.value)),
+        bCur: Number(bCur.value),
+        bTar: Math.max(Number(bCur.value), Number(bTar.value))
+      };
+      syncFormFromState();
+      saveState();
+      renderMaterials();
+    }
+
+    function updateInventory(matId, newValue) {
+      const cleanVal = Math.max(0, Math.floor(Number(newValue) || 0));
+      state.inventory[matId] = cleanVal;
+      saveState();
+      renderMaterials();
+    }
+
+    function renderMaterials() {
+      const charId = state.selectedCharacter;
+      const plan = state.plans[charId];
+      const requiredMap = calculateRequirements(charId, plan);
+      const entries = Object.entries(requiredMap);
+
+      materialsListEl.innerHTML = "";
+
+      if (entries.length === 0) {
+        materialsListEl.innerHTML = `<p style="color: var(--muted);">Target levels match current levels — nothing to farm!</p>`;
+        return;
+      }
+
+      let visibleCount = 0;
+
+      for (const [matId, needed] of entries) {
+        const owned = state.inventory[matId] || 0;
+        const remaining = Math.max(0, needed - owned);
+
+        if (state.hideCompleted && remaining === 0) continue;
+        visibleCount++;
+
+        const meta = GAME_DATA.materialNames[matId] || { name: matId, category: "Material" };
+        const step = matId === "mora" ? 10000 : 1;
+
+        const row = document.createElement("div");
+        row.className = "material-row";
+
+        row.innerHTML = `
+          <div class="mat-info">
+            <div class="mat-name">${meta.name}</div>
+            <div class="mat-category">${meta.category} &bull; Need ${needed.toLocaleString()} total</div>
+          </div>
+          <div class="mat-controls">
+            <button type="button" class="secondary" data-action="dec">-${step.toLocaleString()}</button>
+            <input type="number" min="0" value="${owned}" aria-label="Owned ${meta.name}" />
+            <button type="button" data-action="inc">+${step.toLocaleString()}</button>
+          </div>
+          <div class="mat-status ${remaining === 0 ? "done" : "needed"}">
+            ${remaining === 0 ? "Ready!" : `Need ${remaining.toLocaleString()}`}
+          </div>
+        `;
+
+        const input = row.querySelector("input");
+        const decBtn = row.querySelector('[data-action="dec"]');
+        const incBtn = row.querySelector('[data-action="inc"]');
+
+        input.addEventListener("change", (e) => updateInventory(matId, e.target.value));
+        decBtn.addEventListener("click", () => updateInventory(matId, (state.inventory[matId] || 0) - step));
+        incBtn.addEventListener("click", () => updateInventory(matId, (state.inventory[matId] || 0) + step));
+
+        materialsListEl.appendChild(row);
+      }
+
+      if (visibleCount === 0) {
+        materialsListEl.innerHTML = `<p style="color: var(--success);">All materials for this target are ready!</p>`;
+      }
+    }
+
+    // Event listeners
+    charSelect.addEventListener("change", () => {
+      state.selectedCharacter = charSelect.value;
+      syncFormFromState();
+      saveState();
+      renderMaterials();
+    });
+
+    [ascCurrent, ascTarget, nCur, nTar, sCur, sTar, bCur, bTar].forEach(el => {
+      el.addEventListener("change", readPlanFromForm);
+    });
+
+    hideCompletedEl.addEventListener("change", () => {
+      state.hideCompleted = hideCompletedEl.checked;
+      saveState();
+      renderMaterials();
+    });
+
+    // Backup Export / Import
+    document.getElementById("exportBtn").addEventListener("click", () => {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "genshin-farming-backup.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    const importFile = document.getElementById("importFile");
+    document.getElementById("importBtn").addEventListener("click", () => importFile.click());
+    importFile.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const imported = JSON.parse(reader.result);
+          state = {
+            ...structuredClone(DEFAULT_STATE),
+            ...imported,
+            inventory: { ...(imported.inventory || {}) },
+            plans: { ...DEFAULT_STATE.plans, ...(imported.plans || {}) }
+          };
+          saveState();
+          syncFormFromState();
+          renderMaterials();
+          alert("Backup imported successfully!");
+        } catch {
+          alert("Invalid JSON backup file.");
+        }
+      };
+      reader.readAsText(file);
+      importFile.value = "";
+    });
+
+    // Init
+    populateDropdowns();
+    syncFormFromState();
+    renderMaterials();
+  </script>
+</body>
+</html>
